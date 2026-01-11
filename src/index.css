@@ -1,96 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Definition of the design system for CropCare PWA
+   Primary: #2D5A27 (Forest Green)
+   Secondary: #8BC34A (Light Green)
+   Accent: #FF9800 (Orange)
+   Background: #F8F9FA (Light Gray)
+   Error: #E53E3E (Red)
+   Success: #38A169 (Green)
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Primary: Forest Green #2D5A27 -> HSL(113, 38%, 25%) */
+    --primary: 113 38% 25%;
+    --primary-foreground: 0 0% 100%;
 
+    /* Secondary: Light Green #8BC34A -> HSL(88, 50%, 53%) */
+    --secondary: 88 50% 53%;
+    --secondary-foreground: 113 38% 15%;
+
+    /* Accent: Orange #FF9800 -> HSL(36, 100%, 50%) */
+    --accent: 36 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Background: Light Gray #F8F9FA -> HSL(210, 17%, 98%) */
+    --background: 210 17% 98%;
+    --foreground: 113 38% 15%;
+
+    /* Card styling */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 113 38% 15%;
 
+    /* Popover styling */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 113 38% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Muted styling */
+    --muted: 210 14% 93%;
+    --muted-foreground: 215 16% 47%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Error/Destructive: #E53E3E -> HSL(0, 75%, 57%) */
+    --destructive: 0 75% 57%;
+    --destructive-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Success: #38A169 -> HSL(152, 48%, 43%) */
+    --success: 152 48% 43%;
+    --success-foreground: 0 0% 100%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Border and input styling */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 113 38% 25%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --radius: 0.75rem;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
+    /* Sidebar theming */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 113 38% 20%;
+    --sidebar-primary: 113 38% 25%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 88 50% 90%;
+    --sidebar-accent-foreground: 113 38% 20%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 113 38% 25%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --primary: 88 50% 53%;
+    --primary-foreground: 113 38% 10%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --secondary: 113 38% 35%;
+    --secondary-foreground: 0 0% 100%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --background: 113 20% 8%;
+    --foreground: 210 17% 95%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --card: 113 20% 12%;
+    --card-foreground: 210 17% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --popover: 113 20% 12%;
+    --popover-foreground: 210 17% 95%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 113 15% 18%;
+    --muted-foreground: 215 16% 65%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 152 48% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 113 15% 20%;
+    --input: 113 15% 20%;
+    --ring: 88 50% 53%;
+
+    --sidebar-background: 113 20% 10%;
+    --sidebar-foreground: 210 17% 90%;
+    --sidebar-primary: 88 50% 53%;
+    --sidebar-primary-foreground: 113 38% 10%;
+    --sidebar-accent: 113 20% 18%;
+    --sidebar-accent-foreground: 210 17% 90%;
+    --sidebar-border: 113 15% 20%;
+    --sidebar-ring: 88 50% 53%;
   }
 }
 
@@ -100,6 +118,40 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Open Sans', 'Noto Sans Devanagari', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+  }
+
+  /* Ensure minimum 44px touch targets for accessibility */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* High contrast for outdoor visibility */
+  @media (prefers-contrast: more) {
+    :root {
+      --foreground: 0 0% 0%;
+      --background: 0 0% 100%;
+      --primary: 113 50% 20%;
+    }
+  }
+}
+
+/* Utility classes for success color */
+@layer utilities {
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  .text-success {
+    color: hsl(var(--success));
+  }
+  .border-success {
+    border-color: hsl(var(--success));
   }
 }
