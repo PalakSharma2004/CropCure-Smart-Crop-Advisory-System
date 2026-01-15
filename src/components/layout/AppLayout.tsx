@@ -4,18 +4,20 @@ import { HamburgerMenu } from "./HamburgerMenu";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface AppLayoutProps {
+export interface AppLayoutProps {
   children: ReactNode;
   showNav?: boolean;
   showHeader?: boolean;
   title?: string;
+  rightElement?: ReactNode;
 }
 
 export function AppLayout({ 
   children, 
   showNav = true, 
   showHeader = true,
-  title = "CropCare" 
+  title = "CropCare",
+  rightElement
 }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -27,14 +29,17 @@ export function AppLayout({
             <h1 className="text-lg font-heading font-semibold text-primary">
               {title}
             </h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {rightElement}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </header>
       )}

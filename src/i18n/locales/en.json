@@ -1,0 +1,173 @@
+{
+  "common": {
+    "appName": "CropCare",
+    "tagline": "Smart Farming Assistant",
+    "loading": "Loading...",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "continue": "Continue",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "version": "Version"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी",
+    "selectLanguage": "Select Language",
+    "choosePreferred": "Choose your preferred language"
+  },
+  "splash": {
+    "tagline": "Smart Farming Assistant"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Welcome to CropCare",
+      "description": "Your AI-powered farming assistant for healthier crops and better yields."
+    },
+    "step2": {
+      "title": "Instant Disease Detection",
+      "description": "Take a photo of your crop and get instant AI-powered disease diagnosis."
+    },
+    "step3": {
+      "title": "Weather Insights",
+      "description": "Get local weather forecasts and alerts to plan your farming activities."
+    },
+    "step4": {
+      "title": "Expert AI Assistant",
+      "description": "Chat with our AI assistant for personalized farming advice in your language."
+    }
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "signInAccess": "Sign in to access all features",
+    "login": "Login",
+    "signup": "Sign Up",
+    "phoneNumber": "Phone Number",
+    "phonePlaceholder": "+91 99999 99999",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "createPassword": "Create a password",
+    "fullName": "Full Name",
+    "namePlaceholder": "Enter your name",
+    "location": "Location",
+    "locationPlaceholder": "Select your state",
+    "cropTypes": "Crop Types",
+    "cropTypesPlaceholder": "Select crops you grow",
+    "termsAgree": "I agree to the Terms and Conditions",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account...",
+    "forgotPassword": "Forgot Password?",
+    "continueAsGuest": "Continue as Guest",
+    "orContinueWith": "Or continue with",
+    "signInWithGoogle": "Sign in with Google"
+  },
+  "dashboard": {
+    "welcomeBack": "Welcome back!",
+    "welcomeUser": "Welcome back, {{name}}!",
+    "helpToday": "How can we help your crops today?",
+    "scanCrop": "Scan Your Crop",
+    "instantDetection": "Get instant disease detection",
+    "takePhoto": "Take Photo",
+    "uploadImage": "Upload Image",
+    "weatherToday": "Weather Today",
+    "goodForSpraying": "Good conditions for spraying",
+    "notGoodForSpraying": "Not ideal for spraying",
+    "scansThisMonth": "Scans this month",
+    "healthyCrops": "Healthy crops",
+    "recentAlerts": "Recent Alerts",
+    "recentAnalyses": "Recent Analyses",
+    "dailyTips": "Daily Tips",
+    "viewAll": "View All",
+    "noRecentScans": "No recent scans"
+  },
+  "weather": {
+    "title": "Weather",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "rainfall": "Rainfall",
+    "forecast": "5-Day Forecast"
+  },
+  "capture": {
+    "title": "Capture",
+    "takePhoto": "Take Photo",
+    "uploadFromGallery": "Upload from Gallery",
+    "instructions": "Position your crop in the center of the frame for best results"
+  },
+  "chat": {
+    "title": "AI Assistant",
+    "placeholder": "Ask me anything about farming...",
+    "send": "Send"
+  },
+  "history": {
+    "title": "History",
+    "noScans": "No scans yet",
+    "startScanning": "Start scanning your crops to see history here"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "settings": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "help": "Help & Support",
+    "logout": "Logout"
+  },
+  "crops": {
+    "wheat": "Wheat",
+    "rice": "Rice",
+    "cotton": "Cotton",
+    "sugarcane": "Sugarcane",
+    "maize": "Maize",
+    "potato": "Potato",
+    "tomato": "Tomato",
+    "onion": "Onion",
+    "soybean": "Soybean",
+    "groundnut": "Groundnut"
+  },
+  "states": {
+    "andhraPradesh": "Andhra Pradesh",
+    "bihar": "Bihar",
+    "gujarat": "Gujarat",
+    "haryana": "Haryana",
+    "karnataka": "Karnataka",
+    "madhyaPradesh": "Madhya Pradesh",
+    "maharashtra": "Maharashtra",
+    "punjab": "Punjab",
+    "rajasthan": "Rajasthan",
+    "tamilNadu": "Tamil Nadu",
+    "uttarPradesh": "Uttar Pradesh",
+    "westBengal": "West Bengal"
+  },
+  "tips": {
+    "tip1": {
+      "title": "Water Early Morning",
+      "description": "Watering early reduces evaporation and prevents fungal diseases."
+    },
+    "tip2": {
+      "title": "Check Soil Moisture",
+      "description": "Test soil moisture before watering to avoid overwatering."
+    },
+    "tip3": {
+      "title": "Rotate Crops Yearly",
+      "description": "Crop rotation helps prevent soil depletion and pest buildup."
+    },
+    "tip4": {
+      "title": "Use Organic Mulch",
+      "description": "Mulching conserves moisture and suppresses weed growth."
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidPhone": "Please enter a valid phone number",
+    "invalidEmail": "Please enter a valid email",
+    "passwordMin": "Password must be at least 6 characters",
+    "acceptTerms": "You must accept the terms and conditions"
+  }
+}
