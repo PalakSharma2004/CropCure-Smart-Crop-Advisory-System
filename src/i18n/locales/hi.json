@@ -1,0 +1,173 @@
+{
+  "common": {
+    "appName": "क्रॉपकेयर",
+    "tagline": "स्मार्ट खेती सहायक",
+    "loading": "लोड हो रहा है...",
+    "skip": "छोड़ें",
+    "next": "आगे",
+    "back": "पीछे",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "continue": "जारी रखें",
+    "getStarted": "शुरू करें",
+    "learnMore": "और जानें",
+    "version": "संस्करण"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी",
+    "selectLanguage": "भाषा चुनें",
+    "choosePreferred": "अपनी पसंदीदा भाषा चुनें"
+  },
+  "splash": {
+    "tagline": "स्मार्ट खेती सहायक"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "क्रॉपकेयर में आपका स्वागत है",
+      "description": "स्वस्थ फसलों और बेहतर उपज के लिए आपका AI-संचालित कृषि सहायक।"
+    },
+    "step2": {
+      "title": "तुरंत रोग पहचान",
+      "description": "अपनी फसल की तस्वीर लें और तुरंत AI-संचालित रोग निदान प्राप्त करें।"
+    },
+    "step3": {
+      "title": "मौसम की जानकारी",
+      "description": "अपनी खेती की गतिविधियों की योजना बनाने के लिए स्थानीय मौसम पूर्वानुमान प्राप्त करें।"
+    },
+    "step4": {
+      "title": "विशेषज्ञ AI सहायक",
+      "description": "अपनी भाषा में व्यक्तिगत खेती सलाह के लिए हमारे AI सहायक से चैट करें।"
+    }
+  },
+  "auth": {
+    "welcome": "स्वागत है",
+    "signInAccess": "सभी सुविधाओं तक पहुंचने के लिए साइन इन करें",
+    "login": "लॉगिन",
+    "signup": "साइन अप",
+    "phoneNumber": "फोन नंबर",
+    "phonePlaceholder": "+91 99999 99999",
+    "email": "ईमेल",
+    "emailPlaceholder": "अपना ईमेल दर्ज करें",
+    "password": "पासवर्ड",
+    "passwordPlaceholder": "अपना पासवर्ड दर्ज करें",
+    "createPassword": "पासवर्ड बनाएं",
+    "fullName": "पूरा नाम",
+    "namePlaceholder": "अपना नाम दर्ज करें",
+    "location": "स्थान",
+    "locationPlaceholder": "अपना राज्य चुनें",
+    "cropTypes": "फसल के प्रकार",
+    "cropTypesPlaceholder": "आप जो फसलें उगाते हैं उन्हें चुनें",
+    "termsAgree": "मैं नियम और शर्तों से सहमत हूं",
+    "signIn": "साइन इन करें",
+    "signingIn": "साइन इन हो रहा है...",
+    "createAccount": "खाता बनाएं",
+    "creatingAccount": "खाता बना रहे हैं...",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "continueAsGuest": "अतिथि के रूप में जारी रखें",
+    "orContinueWith": "या इसके साथ जारी रखें",
+    "signInWithGoogle": "Google से साइन इन करें"
+  },
+  "dashboard": {
+    "welcomeBack": "वापसी पर स्वागत है!",
+    "welcomeUser": "वापसी पर स्वागत है, {{name}}!",
+    "helpToday": "आज आपकी फसलों की कैसे मदद करें?",
+    "scanCrop": "अपनी फसल स्कैन करें",
+    "instantDetection": "तुरंत रोग पहचान पाएं",
+    "takePhoto": "फोटो लें",
+    "uploadImage": "छवि अपलोड करें",
+    "weatherToday": "आज का मौसम",
+    "goodForSpraying": "छिड़काव के लिए अच्छी स्थिति",
+    "notGoodForSpraying": "छिड़काव के लिए आदर्श नहीं",
+    "scansThisMonth": "इस महीने स्कैन",
+    "healthyCrops": "स्वस्थ फसलें",
+    "recentAlerts": "हाल की सूचनाएं",
+    "recentAnalyses": "हाल के विश्लेषण",
+    "dailyTips": "दैनिक सुझाव",
+    "viewAll": "सभी देखें",
+    "noRecentScans": "कोई हाल का स्कैन नहीं"
+  },
+  "weather": {
+    "title": "मौसम",
+    "humidity": "नमी",
+    "wind": "हवा",
+    "rainfall": "वर्षा",
+    "forecast": "5-दिन का पूर्वानुमान"
+  },
+  "capture": {
+    "title": "कैप्चर",
+    "takePhoto": "फोटो लें",
+    "uploadFromGallery": "गैलरी से अपलोड करें",
+    "instructions": "सर्वोत्तम परिणामों के लिए अपनी फसल को फ्रेम के केंद्र में रखें"
+  },
+  "chat": {
+    "title": "AI सहायक",
+    "placeholder": "खेती के बारे में कुछ भी पूछें...",
+    "send": "भेजें"
+  },
+  "history": {
+    "title": "इतिहास",
+    "noScans": "अभी तक कोई स्कैन नहीं",
+    "startScanning": "यहां इतिहास देखने के लिए अपनी फसलों को स्कैन करना शुरू करें"
+  },
+  "profile": {
+    "title": "प्रोफाइल",
+    "editProfile": "प्रोफाइल संपादित करें",
+    "settings": "सेटिंग्स",
+    "language": "भाषा",
+    "notifications": "सूचनाएं",
+    "help": "सहायता और समर्थन",
+    "logout": "लॉग आउट"
+  },
+  "crops": {
+    "wheat": "गेहूं",
+    "rice": "चावल",
+    "cotton": "कपास",
+    "sugarcane": "गन्ना",
+    "maize": "मक्का",
+    "potato": "आलू",
+    "tomato": "टमाटर",
+    "onion": "प्याज",
+    "soybean": "सोयाबीन",
+    "groundnut": "मूंगफली"
+  },
+  "states": {
+    "andhraPradesh": "आंध्र प्रदेश",
+    "bihar": "बिहार",
+    "gujarat": "गुजरात",
+    "haryana": "हरियाणा",
+    "karnataka": "कर्नाटक",
+    "madhyaPradesh": "मध्य प्रदेश",
+    "maharashtra": "महाराष्ट्र",
+    "punjab": "पंजाब",
+    "rajasthan": "राजस्थान",
+    "tamilNadu": "तमिलनाडु",
+    "uttarPradesh": "उत्तर प्रदेश",
+    "westBengal": "पश्चिम बंगाल"
+  },
+  "tips": {
+    "tip1": {
+      "title": "सुबह जल्दी पानी दें",
+      "description": "जल्दी पानी देने से वाष्पीकरण कम होता है और कवक रोगों को रोकता है।"
+    },
+    "tip2": {
+      "title": "मिट्टी की नमी जांचें",
+      "description": "अधिक पानी देने से बचने के लिए पानी देने से पहले मिट्टी की नमी जांचें।"
+    },
+    "tip3": {
+      "title": "हर साल फसल बदलें",
+      "description": "फसल चक्र मिट्टी की कमी और कीट निर्माण को रोकने में मदद करता है।"
+    },
+    "tip4": {
+      "title": "जैविक मल्च का उपयोग करें",
+      "description": "मल्चिंग नमी बचाती है और खरपतवार विकास को दबाती है।"
+    }
+  },
+  "validation": {
+    "required": "यह फ़ील्ड आवश्यक है",
+    "invalidPhone": "कृपया वैध फोन नंबर दर्ज करें",
+    "invalidEmail": "कृपया वैध ईमेल दर्ज करें",
+    "passwordMin": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए",
+    "acceptTerms": "आपको नियम और शर्तें स्वीकार करनी होंगी"
+  }
+}
