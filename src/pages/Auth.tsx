@@ -1,30 +1,32 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Leaf, Eye, EyeOff, Globe } from "lucide-react";
+import { Leaf, Eye, EyeOff, Globe, Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  location: z.string().min(1, "Please select your location"),
-  cropTypes: z.array(z.string()).min(1, "Please select at least one crop type"),
+  location: z.string().optional(),
+  cropTypes: z.array(z.string()).default([]),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "You must accept the terms and conditions" }),
   }),
@@ -66,12 +68,23 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, currentLanguage, toggleLanguage } = useLanguage();
+  const { signIn, signUp, signInWithGoogle, user, loading } = useAuth();
+  const { toast } = useToast();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      const from = (location.state as any)?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, location]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      phone: "",
+      email: "",
       password: "",
     },
   });
@@ -80,6 +93,7 @@ export default function Auth() {
     resolver: zodResolver(signupSchema),
     defaultValues: {
       fullName: "",
+      email: "",
       phone: "",
       password: "",
       location: "",
@@ -90,30 +104,83 @@ export default function Auth() {
 
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
-    // TODO: Implement actual authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/dashboard");
-    }, 1000);
+    const { error } = await signIn(data.email, data.password);
+    setIsLoading(false);
+
+    if (error) {
+      let errorMessage = "Failed to sign in. Please try again.";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please verify your email address before signing in.";
+      }
+
+      toast({
+        title: "Sign In Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Welcome back!",
+      description: "You have successfully signed in.",
+    });
+    navigate("/dashboard");
   };
 
   const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
-    // TODO: Implement actual registration
-    console.log("Signup data:", data);
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/dashboard");
-    }, 1000);
+    const { error } = await signUp(data.email, data.password, {
+      full_name: data.fullName,
+      phone: data.phone,
+      location: data.location,
+      crops: data.cropTypes,
+    });
+    setIsLoading(false);
+
+    if (error) {
+      let errorMessage = "Failed to create account. Please try again.";
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      } else if (error.message.includes("Password")) {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      }
+
+      toast({
+        title: "Sign Up Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Account Created!",
+      description: "Welcome to CropGuard. Your account has been created successfully.",
+    });
+    navigate("/dashboard");
   };
 
   const handleGuestAccess = () => {
     navigate("/dashboard");
   };
 
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google sign-in
-    console.log("Google sign-in clicked");
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    const { error } = await signInWithGoogle();
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Google Sign In Error",
+        description: "Failed to sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleCrop = (cropValue: string) => {
@@ -124,6 +191,15 @@ export default function Auth() {
     setSelectedCrops(updated);
     signupForm.setValue("cropTypes", updated, { shouldValidate: true });
   };
+
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background">
@@ -167,14 +243,15 @@ export default function Auth() {
                 <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4 mt-4">
                   <FormField
                     control={loginForm.control}
-                    name="phone"
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("auth.phoneNumber")}</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input
-                            type="tel"
-                            placeholder={t("auth.phonePlaceholder")}
+                            type="email"
+                            placeholder="Enter your email"
+                            autoComplete="email"
                             {...field}
                           />
                         </FormControl>
@@ -194,6 +271,7 @@ export default function Auth() {
                             <Input
                               type={showPassword ? "text" : "password"}
                               placeholder={t("auth.passwordPlaceholder")}
+                              autoComplete="current-password"
                               {...field}
                             />
                             <button
@@ -217,7 +295,14 @@ export default function Auth() {
                   </div>
 
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? t("auth.signingIn") : t("auth.signIn")}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t("auth.signingIn")}
+                      </>
+                    ) : (
+                      t("auth.signIn")
+                    )}
                   </Button>
                 </form>
               </Form>
@@ -237,6 +322,26 @@ export default function Auth() {
                           <Input
                             type="text"
                             placeholder={t("auth.namePlaceholder")}
+                            autoComplete="name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={signupForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="Enter your email"
+                            autoComplete="email"
                             {...field}
                           />
                         </FormControl>
@@ -250,11 +355,12 @@ export default function Auth() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("auth.phoneNumber")}</FormLabel>
+                        <FormLabel>{t("auth.phoneNumber")} (Optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
                             placeholder={t("auth.phonePlaceholder")}
+                            autoComplete="tel"
                             {...field}
                           />
                         </FormControl>
@@ -274,6 +380,7 @@ export default function Auth() {
                             <Input
                               type={showPassword ? "text" : "password"}
                               placeholder={t("auth.createPassword")}
+                              autoComplete="new-password"
                               {...field}
                             />
                             <button
@@ -295,7 +402,7 @@ export default function Auth() {
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("auth.location")}</FormLabel>
+                        <FormLabel>{t("auth.location")} (Optional)</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -320,7 +427,7 @@ export default function Auth() {
                     name="cropTypes"
                     render={() => (
                       <FormItem>
-                        <FormLabel>{t("auth.cropTypes")}</FormLabel>
+                        <FormLabel>{t("auth.cropTypes")} (Optional)</FormLabel>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {cropTypes.map((crop) => (
                             <button
@@ -364,7 +471,14 @@ export default function Auth() {
                   />
 
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? t("auth.creatingAccount") : t("auth.createAccount")}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t("auth.creatingAccount")}
+                      </>
+                    ) : (
+                      t("auth.createAccount")
+                    )}
                   </Button>
                 </form>
               </Form>
@@ -388,6 +502,7 @@ export default function Auth() {
               variant="outline"
               className="w-full mt-4"
               onClick={handleGoogleSignIn}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
