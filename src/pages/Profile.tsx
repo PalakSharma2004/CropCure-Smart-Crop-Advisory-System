@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,9 +48,11 @@ import {
   Mail,
   Save,
   X,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -64,26 +66,24 @@ const cropTypes = ["Wheat", "Rice", "Tomato", "Cotton", "Sugarcane", "Potato", "
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { user, profile, signOut, updateProfile, uploadAvatar, loading } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
-
-  // User data state
-  const [user, setUser] = useState({
-    name: "Rajesh Kumar",
-    email: "rajesh.kumar@email.com",
-    phone: "+91 98765 43210",
-    location: "Uttar Pradesh",
-    city: "Varanasi",
-    crops: ["Wheat", "Rice", "Tomato"],
-    scans: 24,
-    memberSince: "January 2024",
-    avatarUrl: "",
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Edit form state
-  const [editForm, setEditForm] = useState({ ...user });
+  const [editForm, setEditForm] = useState({
+    display_name: "",
+    email: "",
+    phone: "",
+    location: "",
+    crops: [] as string[],
+  });
 
-  // Notification preferences
+  // Notification preferences (stored locally for now)
   const [notifications, setNotifications] = useState({
     diseaseAlerts: true,
     weatherUpdates: true,
@@ -91,24 +91,92 @@ export default function Profile() {
     promotions: false,
   });
 
-  const handleSaveProfile = () => {
-    setUser(editForm);
+  // Sync form with profile data
+  useEffect(() => {
+    if (profile) {
+      setEditForm({
+        display_name: profile.display_name || "",
+        email: profile.email || user?.email || "",
+        phone: profile.phone || "",
+        location: profile.location || "",
+        crops: profile.crops || [],
+      });
+    }
+  }, [profile, user]);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    const { error } = await updateProfile({
+      display_name: editForm.display_name,
+      phone: editForm.phone,
+      location: editForm.location,
+      crops: editForm.crops,
+    });
+    setIsSaving(false);
+
+    if (error) {
+      toast.error("Failed to update profile. Please try again.");
+      return;
+    }
+
     setIsEditing(false);
     toast.success("Profile updated successfully!");
   };
 
   const handleCancelEdit = () => {
-    setEditForm({ ...user });
+    if (profile) {
+      setEditForm({
+        display_name: profile.display_name || "",
+        email: profile.email || user?.email || "",
+        phone: profile.phone || "",
+        location: profile.location || "",
+        crops: profile.crops || [],
+      });
+    }
     setIsEditing(false);
   };
 
-  const handlePhotoUpload = () => {
-    // Simulate photo upload
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB.");
+      return;
+    }
+
+    setIsUploading(true);
     setShowPhotoDialog(false);
+    
+    const { error } = await uploadAvatar(file);
+    setIsUploading(false);
+
+    if (error) {
+      toast.error("Failed to upload photo. Please try again.");
+      return;
+    }
+
     toast.success("Photo uploaded successfully!");
   };
 
-  const handleLogout = () => {
+  const handleTakePhoto = () => {
+    // For now, just open file picker - camera API would require more setup
+    fileInputRef.current?.click();
+  };
+
+  const handleChooseFromGallery = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Logged out successfully!");
     navigate("/auth");
   };
@@ -122,18 +190,49 @@ export default function Profile() {
     }));
   };
 
+  const displayName = profile?.display_name || user?.email?.split("@")[0] || "User";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const memberSince = profile?.created_at 
+    ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : "Recently joined";
+
+  if (loading) {
+    return (
+      <AppLayout title="Profile">
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout title="Profile">
       <div className="p-4 space-y-6 pb-24">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+
         {/* Profile Header */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.name} />
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <Button 
@@ -141,20 +240,31 @@ export default function Profile() {
                   size="icon" 
                   className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full shadow-md"
                   onClick={() => setShowPhotoDialog(true)}
+                  disabled={isUploading}
                 >
-                  <Camera className="h-4 w-4" />
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-heading font-semibold">{user.name}</h2>
+                <h2 className="text-xl font-heading font-semibold">{displayName}</h2>
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <MapPin className="h-3 w-3" />
-                  {user.city}, {user.location}
+                  {profile?.location || "Location not set"}
                 </p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {user.phone}
+                  <Mail className="h-3 w-3" />
+                  {user?.email}
                 </p>
+                {profile?.phone && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {profile.phone}
+                  </p>
+                )}
               </div>
               <Button 
                 variant={isEditing ? "secondary" : "outline"} 
@@ -178,8 +288,8 @@ export default function Profile() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input 
                   id="name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  value={editForm.display_name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, display_name: e.target.value }))}
                 />
               </div>
 
@@ -192,9 +302,10 @@ export default function Profile() {
                     type="email"
                     className="pl-9"
                     value={editForm.email}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                    disabled
                   />
                 </div>
+                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
               </div>
 
               <div className="space-y-2">
@@ -210,33 +321,23 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>State</Label>
-                  <Select 
-                    value={editForm.location} 
-                    onValueChange={(value) => setEditForm(prev => ({ ...prev, location: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {indianStates.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">City/District</Label>
-                  <Input 
-                    id="city"
-                    value={editForm.city}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Select 
+                  value={editForm.location} 
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, location: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select state" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {indianStates.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -255,9 +356,18 @@ export default function Profile() {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={handleSaveProfile}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button className="w-full" onClick={handleSaveProfile} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -270,7 +380,7 @@ export default function Profile() {
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                 <Leaf className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-2xl font-bold">{user.scans}</p>
+              <p className="text-2xl font-bold">0</p>
               <p className="text-xs text-muted-foreground">Total Scans</p>
             </CardContent>
           </Card>
@@ -279,7 +389,7 @@ export default function Profile() {
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-2">
                 <Award className="h-5 w-5 text-accent" />
               </div>
-              <p className="text-2xl font-bold">Silver</p>
+              <p className="text-2xl font-bold">Bronze</p>
               <p className="text-xs text-muted-foreground">Member Level</p>
             </CardContent>
           </Card>
@@ -298,11 +408,15 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {user.crops.map((crop) => (
-                  <Badge key={crop} variant="secondary" className="text-sm">
-                    {crop}
-                  </Badge>
-                ))}
+                {profile?.crops && profile.crops.length > 0 ? (
+                  profile.crops.map((crop) => (
+                    <Badge key={crop} variant="secondary" className="text-sm">
+                      {crop}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No crops selected yet</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -363,7 +477,6 @@ export default function Profile() {
         {/* Menu Items */}
         <div className="space-y-2">
           {[
-            { label: "My Farm Details", path: "/farm", icon: Leaf },
             { label: "Language Preferences", path: "/settings", icon: Globe },
           ].map((item) => {
             const Icon = item.icon;
@@ -410,7 +523,7 @@ export default function Profile() {
         </AlertDialog>
 
         <p className="text-xs text-center text-muted-foreground">
-          Member since {user.memberSince}
+          Member since {memberSince}
         </p>
       </div>
 
@@ -424,11 +537,11 @@ export default function Profile() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-4">
-            <Button variant="outline" className="h-24 flex-col gap-2" onClick={handlePhotoUpload}>
+            <Button variant="outline" className="h-24 flex-col gap-2" onClick={handleTakePhoto}>
               <Camera className="h-8 w-8" />
               <span>Take Photo</span>
             </Button>
-            <Button variant="outline" className="h-24 flex-col gap-2" onClick={handlePhotoUpload}>
+            <Button variant="outline" className="h-24 flex-col gap-2" onClick={handleChooseFromGallery}>
               <User className="h-8 w-8" />
               <span>Choose from Gallery</span>
             </Button>
