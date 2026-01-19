@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_conversations: {
+        Row: {
+          conversation_date: string
+          created_at: string
+          id: string
+          message_content: string
+          message_type: string
+          metadata: Json | null
+          response_content: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_date?: string
+          created_at?: string
+          id?: string
+          message_content: string
+          message_type?: string
+          metadata?: Json | null
+          response_content?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_date?: string
+          created_at?: string
+          id?: string
+          message_content?: string
+          message_type?: string
+          metadata?: Json | null
+          response_content?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crop_analyses: {
+        Row: {
+          analysis_date: string
+          confidence_score: number | null
+          created_at: string
+          crop_type: string
+          disease_prediction: string | null
+          id: string
+          image_url: string
+          location_data: Json | null
+          severity_level: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_date?: string
+          confidence_score?: number | null
+          created_at?: string
+          crop_type: string
+          disease_prediction?: string | null
+          id?: string
+          image_url: string
+          location_data?: Json | null
+          severity_level?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_date?: string
+          confidence_score?: number | null
+          created_at?: string
+          crop_type?: string
+          disease_prediction?: string | null
+          id?: string
+          image_url?: string
+          location_data?: Json | null
+          severity_level?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -51,6 +129,83 @@ export type Database = {
           location?: string | null
           phone?: string | null
           preferred_language?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      treatment_recommendations: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          expert_tips: Json
+          id: string
+          precautionary_measures: Json
+          products_recommended: Json
+          timeline: string | null
+          treatment_steps: Json
+          updated_at: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          expert_tips?: Json
+          id?: string
+          precautionary_measures?: Json
+          products_recommended?: Json
+          timeline?: string | null
+          treatment_steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          expert_tips?: Json
+          id?: string
+          precautionary_measures?: Json
+          products_recommended?: Json
+          timeline?: string | null
+          treatment_steps?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_recommendations_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "crop_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          location: Json | null
+          notification_settings: Json
+          preferred_crops: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string
+          location?: Json | null
+          notification_settings?: Json
+          preferred_crops?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          location?: Json | null
+          notification_settings?: Json
+          preferred_crops?: string[] | null
           updated_at?: string
           user_id?: string
         }
