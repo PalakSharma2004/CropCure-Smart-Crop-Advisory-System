@@ -1,10 +1,44 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const chatRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string().max(10000, "Message too long"),
+  })).max(50, "Too many messages in context"),
+  userId: z.string().uuid().optional(),
+  language: z.enum(["en", "hi"]).default("en"),
+});
+
+// Rate limiting tracker (in-memory, resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 20;
+
+function checkRateLimit(userId: string | undefined): boolean {
+  const key = userId || "anonymous";
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,11 +46,38 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, userId, language = "en" } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validationResult = chatRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid request format",
+        details: validationResult.error.issues.map(i => i.message).join(", ")
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { messages, userId, language } = validationResult.data;
+
+    // Check rate limit
+    if (!checkRateLimit(userId)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait a moment." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(JSON.stringify({ error: "Service configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Create Supabase client to fetch user context
@@ -120,7 +181,7 @@ ${userContext}`;
     });
   } catch (error) {
     console.error("Chat function error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An error occurred. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

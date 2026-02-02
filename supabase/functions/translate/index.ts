@@ -1,8 +1,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Input validation
+const translateRequestSchema = z.object({
+  text: z.string().min(1).max(10000, "Text too long"),
+  targetLanguage: z.enum(["en", "hi", "mr", "ta", "te", "bn", "gu", "pa", "kn", "ml"]),
+  sourceLanguage: z.enum(["en", "hi", "mr", "ta", "te", "bn", "gu", "pa", "kn", "ml"]).optional(),
+});
+
+const languageNames: Record<string, string> = {
+  en: "English",
+  hi: "Hindi",
+  mr: "Marathi",
+  ta: "Tamil",
+  te: "Telugu",
+  bn: "Bengali",
+  gu: "Gujarati",
+  pa: "Punjabi",
+  kn: "Kannada",
+  ml: "Malayalam",
 };
 
 serve(async (req) => {
@@ -11,27 +32,30 @@ serve(async (req) => {
   }
 
   try {
-    const { text, targetLanguage, sourceLanguage } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validationResult = translateRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid request format",
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    const { text, targetLanguage, sourceLanguage } = validationResult.data;
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(JSON.stringify({ error: "Service configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    // Use AI for translation instead of Google Translate API
-    const languageNames: Record<string, string> = {
-      en: "English",
-      hi: "Hindi",
-      mr: "Marathi",
-      ta: "Tamil",
-      te: "Telugu",
-      bn: "Bengali",
-      gu: "Gujarati",
-      pa: "Punjabi",
-      kn: "Kannada",
-      ml: "Malayalam",
-    };
 
     const targetLang = languageNames[targetLanguage] || targetLanguage;
     const sourceLang = sourceLanguage ? languageNames[sourceLanguage] : "auto-detect";
@@ -59,7 +83,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -80,7 +104,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Translation error:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Translation failed" 
+      error: "Translation failed. Please try again." 
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

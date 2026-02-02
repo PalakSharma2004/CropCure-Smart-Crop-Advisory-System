@@ -54,3 +54,9 @@ export { useImageUpload } from './useImageUpload';
 
 // Offline sync
 export { useOfflineSync } from './useOfflineSync';
+
+// AI and external services
+export { useAIChat, type ChatMessage as AIChatMessage } from './useAIChat';
+export { useCropAnalysis } from './useCropAnalysis';
+export { useWeather } from './useWeather';
+export { useTranslation } from './useTranslation';
