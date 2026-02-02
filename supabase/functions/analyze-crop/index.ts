@@ -1,10 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const analyzeRequestSchema = z.object({
+  imageUrl: z.string().url().max(2000),
+  cropType: z.string().min(1).max(100).regex(/^[a-zA-Z\s]+$/, "Invalid crop type"),
+  analysisId: z.string().uuid(),
+  userId: z.string().uuid(),
+  language: z.enum(["en", "hi"]).default("en"),
+});
 
 interface AnalysisResult {
   disease_prediction: string | null;
@@ -17,22 +27,84 @@ interface AnalysisResult {
   timeline: string;
 }
 
+// Sanitize string output
+function sanitizeString(str: string): string {
+  return str.replace(/<[^>]*>/g, '').substring(0, 1000);
+}
+
+// Sanitize analysis result
+function sanitizeResult(result: AnalysisResult): AnalysisResult {
+  return {
+    disease_prediction: result.disease_prediction ? sanitizeString(result.disease_prediction) : null,
+    confidence_score: Math.min(Math.max(Number(result.confidence_score) || 0, 0), 1),
+    severity_level: ["low", "moderate", "severe", "critical"].includes(result.severity_level) 
+      ? result.severity_level 
+      : "low",
+    treatment_steps: Array.isArray(result.treatment_steps) 
+      ? result.treatment_steps.slice(0, 10).map(s => sanitizeString(String(s)))
+      : [],
+    precautionary_measures: Array.isArray(result.precautionary_measures)
+      ? result.precautionary_measures.slice(0, 10).map(s => sanitizeString(String(s)))
+      : [],
+    products_recommended: Array.isArray(result.products_recommended)
+      ? result.products_recommended.slice(0, 10).map(s => sanitizeString(String(s)))
+      : [],
+    expert_tips: Array.isArray(result.expert_tips)
+      ? result.expert_tips.slice(0, 10).map(s => sanitizeString(String(s)))
+      : [],
+    timeline: result.timeline ? sanitizeString(result.timeline) : "N/A",
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { imageUrl, cropType, analysisId, userId, language = "en" } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validationResult = analyzeRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid request format",
+        details: validationResult.error.issues.map(i => i.message).join(", ")
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { imageUrl, cropType, analysisId, userId, language } = validationResult.data;
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(JSON.stringify({ error: "Service configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify the analysis belongs to the user
+    const { data: existingAnalysis, error: fetchError } = await supabase
+      .from("crop_analyses")
+      .select("id, user_id")
+      .eq("id", analysisId)
+      .eq("user_id", userId)
+      .single();
+
+    if (fetchError || !existingAnalysis) {
+      return new Response(JSON.stringify({ error: "Analysis not found or access denied" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Update analysis status to processing
     await supabase
@@ -120,7 +192,8 @@ ${language === 'hi' ? '- Provide treatment steps and tips in Hindi' : ''}`;
     
     let result: AnalysisResult;
     try {
-      result = JSON.parse(content);
+      const parsed = JSON.parse(content);
+      result = sanitizeResult(parsed);
     } catch {
       // Fallback if JSON parsing fails
       result = {
@@ -186,7 +259,7 @@ ${language === 'hi' ? '- Provide treatment steps and tips in Hindi' : ''}`;
   } catch (error) {
     console.error("Analyze crop error:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Analysis failed" 
+      error: "Analysis failed. Please try again." 
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

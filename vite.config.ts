@@ -10,6 +10,21 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    // Performance optimizations
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          query: ['@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500,
+    sourcemap: mode === 'development',
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -26,6 +41,7 @@ export default defineConfig(({ mode }) => ({
         orientation: "portrait",
         scope: "/",
         start_url: "/",
+        categories: ["agriculture", "productivity", "utilities"],
         icons: [
           {
             src: "pwa-192x192.png",
@@ -44,9 +60,25 @@ export default defineConfig(({ mode }) => ({
             purpose: "any maskable",
           },
         ],
+        screenshots: [
+          {
+            src: "screenshot-wide.png",
+            sizes: "1280x720",
+            type: "image/png",
+            form_factor: "wide",
+          },
+          {
+            src: "screenshot-narrow.png",
+            sizes: "720x1280",
+            type: "image/png",
+            form_factor: "narrow",
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Skip large files to reduce cache size
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -76,7 +108,38 @@ export default defineConfig(({ mode }) => ({
               },
             },
           },
+          // Cache API responses for offline
+          {
+            urlPattern: /\/functions\/v1\/(weather|translate)/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hour
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
+          // Cache images
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
         ],
+      },
+      devOptions: {
+        enabled: false,
       },
     }),
   ].filter(Boolean),
