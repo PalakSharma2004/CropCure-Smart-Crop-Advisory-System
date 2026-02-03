@@ -107,14 +107,6 @@ export function useOfflineSync() {
               await supabase.from('user_preferences').update(data).eq('user_id', user_id);
             }
             break;
-
-          case 'preference':
-            if (item.action === 'update') {
-              const prefData = item.data as { user_id: string; [key: string]: unknown };
-              const { user_id, ...data } = prefData;
-              await supabase.from('user_preferences').update(data).eq('user_id', user_id);
-            }
-            break;
         }
 
         removePendingSync(item.id);
