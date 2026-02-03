@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   BookOpen, 
   Play, 
@@ -24,18 +25,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-interface ContentItem {
-  id: string;
-  title: string;
-  description: string;
-  type: "video" | "article" | "guide";
-  category: "diseases" | "treatments" | "prevention" | "general";
-  duration: string;
-  thumbnail: string;
-  isBookmarked: boolean;
-  isDownloaded: boolean;
-}
+import { useEducationalContent, useToggleBookmark, useMarkDownloaded, type ContentWithProgress } from "@/hooks/useEducationalContent";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const categoryIcons = {
   diseases: Bug,
@@ -54,105 +45,26 @@ const categoryColors = {
 export default function Learn() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [content, setContent] = useState<ContentItem[]>([
-    {
-      id: "1",
-      title: "Identifying Common Tomato Diseases",
-      description: "Learn to recognize early signs of blight, wilt, and other tomato diseases with visual examples.",
-      type: "video",
-      category: "diseases",
-      duration: "5 min",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: true,
-      isDownloaded: false,
-    },
-    {
-      id: "2",
-      title: "Organic Pest Control Methods",
-      description: "Discover natural ways to protect your crops from common pests without chemicals.",
-      type: "article",
-      category: "prevention",
-      duration: "3 min read",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: false,
-    },
-    {
-      id: "3",
-      title: "Best Practices for Rice Cultivation",
-      description: "Complete guide to growing healthy rice crops from planting to harvest.",
-      type: "video",
-      category: "general",
-      duration: "8 min",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: true,
-    },
-    {
-      id: "4",
-      title: "Treating Wheat Rust Disease",
-      description: "Step-by-step treatment guide for wheat rust with recommended fungicides.",
-      type: "guide",
-      category: "treatments",
-      duration: "4 min read",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: true,
-      isDownloaded: false,
-    },
-    {
-      id: "5",
-      title: "Early Blight Prevention in Potatoes",
-      description: "Preventive measures to protect potato crops from early blight infection.",
-      type: "article",
-      category: "prevention",
-      duration: "5 min read",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: false,
-    },
-    {
-      id: "6",
-      title: "Water Management for Crops",
-      description: "Efficient irrigation techniques to optimize water usage and crop yield.",
-      type: "video",
-      category: "general",
-      duration: "6 min",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: false,
-    },
-    {
-      id: "7",
-      title: "Cotton Leaf Curl Virus Guide",
-      description: "Understanding and managing cotton leaf curl virus in your fields.",
-      type: "guide",
-      category: "diseases",
-      duration: "7 min read",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: false,
-    },
-    {
-      id: "8",
-      title: "Integrated Pest Management",
-      description: "Comprehensive approach combining biological, cultural, and chemical pest control.",
-      type: "video",
-      category: "treatments",
-      duration: "10 min",
-      thumbnail: "/placeholder.svg",
-      isBookmarked: false,
-      isDownloaded: false,
-    },
-  ]);
+  const { currentLanguage } = useLanguage();
+  
+  // Real data hooks
+  const { data: content, isLoading, error } = useEducationalContent(currentLanguage);
+  const toggleBookmarkMutation = useToggleBookmark();
+  const markDownloadedMutation = useMarkDownloaded();
 
-  const categories = [
-    { id: "diseases", name: "Diseases", count: content.filter(c => c.category === "diseases").length, icon: Bug },
-    { id: "treatments", name: "Treatments", count: content.filter(c => c.category === "treatments").length, icon: ShieldCheck },
-    { id: "prevention", name: "Prevention", count: content.filter(c => c.category === "prevention").length, icon: Leaf },
-    { id: "general", name: "General", count: content.filter(c => c.category === "general").length, icon: Droplets },
-  ];
+  const categories = useMemo(() => {
+    if (!content) return [];
+    return [
+      { id: "diseases", name: "Diseases", count: content.filter(c => c.category === "diseases").length, icon: Bug },
+      { id: "treatments", name: "Treatments", count: content.filter(c => c.category === "treatments").length, icon: ShieldCheck },
+      { id: "prevention", name: "Prevention", count: content.filter(c => c.category === "prevention").length, icon: Leaf },
+      { id: "general", name: "General", count: content.filter(c => c.category === "general").length, icon: Droplets },
+    ];
+  }, [content]);
 
   const filteredContent = useMemo(() => {
+    if (!content) return [];
+    
     return content.filter((item) => {
       const matchesSearch = !searchQuery || 
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -167,19 +79,25 @@ export default function Learn() {
     });
   }, [content, searchQuery, activeTab]);
 
-  const handleBookmark = (id: string) => {
-    setContent(prev => prev.map(item => 
-      item.id === id ? { ...item, isBookmarked: !item.isBookmarked } : item
-    ));
-    const item = content.find(c => c.id === id);
-    toast.success(item?.isBookmarked ? "Removed from bookmarks" : "Added to bookmarks");
+  const handleBookmark = async (item: ContentWithProgress) => {
+    try {
+      await toggleBookmarkMutation.mutateAsync({ 
+        contentId: item.id, 
+        isBookmarked: item.isBookmarked 
+      });
+      toast.success(item.isBookmarked ? "Removed from bookmarks" : "Added to bookmarks");
+    } catch {
+      toast.error("Failed to update bookmark");
+    }
   };
 
-  const handleDownload = (id: string) => {
-    setContent(prev => prev.map(item => 
-      item.id === id ? { ...item, isDownloaded: true } : item
-    ));
-    toast.success("Downloaded for offline access");
+  const handleDownload = async (item: ContentWithProgress) => {
+    try {
+      await markDownloadedMutation.mutateAsync(item.id);
+      toast.success("Downloaded for offline access");
+    } catch {
+      toast.error("Failed to download");
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -191,9 +109,21 @@ export default function Learn() {
     }
   };
 
+  if (error) {
+    return (
+      <AppLayout title="Learn">
+        <div className="p-4 text-center py-12">
+          <BookOpen className="h-12 w-12 mx-auto mb-2 text-destructive opacity-50" />
+          <p className="text-destructive">Failed to load content</p>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout title="Learn">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 pb-24">
         {/* Header */}
         <div>
           <h2 className="text-xl font-heading font-semibold">
@@ -225,30 +155,42 @@ export default function Learn() {
 
         {/* Categories */}
         <div className="grid grid-cols-2 gap-3">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Card 
-                key={category.id} 
-                className={cn(
-                  "cursor-pointer hover:shadow-md transition-all",
-                  activeTab === category.id && "ring-2 ring-primary"
-                )}
-                onClick={() => setActiveTab(activeTab === category.id ? "all" : category.id)}
-              >
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
                 <CardContent className="p-4">
-                  <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center mb-3",
-                    categoryColors[category.id as keyof typeof categoryColors]
-                  )}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <p className="font-medium text-sm">{category.name}</p>
-                  <p className="text-xs text-muted-foreground">{category.count} resources</p>
+                  <Skeleton className="w-10 h-10 rounded-full mb-3" />
+                  <Skeleton className="h-4 w-20 mb-1" />
+                  <Skeleton className="h-3 w-16" />
                 </CardContent>
               </Card>
-            );
-          })}
+            ))
+          ) : (
+            categories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <Card 
+                  key={category.id} 
+                  className={cn(
+                    "cursor-pointer hover:shadow-md transition-all",
+                    activeTab === category.id && "ring-2 ring-primary"
+                  )}
+                  onClick={() => setActiveTab(activeTab === category.id ? "all" : category.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center mb-3",
+                      categoryColors[category.id as keyof typeof categoryColors]
+                    )}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="font-medium text-sm">{category.name}</p>
+                    <p className="text-xs text-muted-foreground">{category.count} resources</p>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Content Tabs */}
@@ -266,7 +208,22 @@ export default function Learn() {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-4 space-y-3">
-            {filteredContent.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-0">
+                    <div className="flex gap-4">
+                      <Skeleton className="w-28 h-24" />
+                      <div className="flex-1 py-3 pr-4">
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-3 w-3/4 mb-2" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : filteredContent.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <BookOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No resources found</p>
@@ -274,7 +231,7 @@ export default function Learn() {
               </div>
             ) : (
               filteredContent.map((item) => {
-                const TypeIcon = getTypeIcon(item.type);
+                const TypeIcon = getTypeIcon(item.content_type);
                 const CategoryIcon = categoryIcons[item.category];
                 
                 return (
@@ -283,11 +240,11 @@ export default function Learn() {
                       <div className="flex gap-4">
                         <div className="relative w-28 h-24 bg-muted shrink-0">
                           <img
-                            src={item.thumbnail}
+                            src={item.thumbnail_url || "/placeholder.svg"}
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
-                          {item.type === "video" && (
+                          {item.content_type === "video" && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                               <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
                                 <Play className="h-5 w-5 text-primary fill-primary ml-0.5" />
@@ -307,9 +264,10 @@ export default function Learn() {
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 shrink-0 -mr-2"
+                              disabled={toggleBookmarkMutation.isPending}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleBookmark(item.id);
+                                handleBookmark(item);
                               }}
                             >
                               {item.isBookmarked ? (
@@ -325,7 +283,7 @@ export default function Learn() {
                           <div className="flex items-center gap-2 mt-2">
                             <Badge variant="secondary" className="text-xs gap-1">
                               <TypeIcon className="h-3 w-3" />
-                              {item.type}
+                              {item.content_type}
                             </Badge>
                             <Badge variant="outline" className={cn("text-xs", categoryColors[item.category])}>
                               {item.category}
