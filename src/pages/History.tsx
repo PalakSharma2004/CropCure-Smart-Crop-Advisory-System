@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { AppLayout } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -26,19 +27,11 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAnalyses, type CropAnalysis } from "@/hooks/useAnalyses";
+import { VirtualizedList } from "@/components/common";
+import { formatDistanceToNow } from "date-fns";
 
 type ViewMode = "grid" | "list";
-type ScanStatus = "healthy" | "treated" | "ongoing";
-
-interface Scan {
-  id: string;
-  date: string;
-  crop: string;
-  result: string;
-  status: ScanStatus;
-  imageUrl: string;
-  confidence: number;
-}
 
 export default function History() {
   const navigate = useNavigate();
@@ -47,64 +40,22 @@ export default function History() {
   const [cropFilter, setCropFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
-  // Mock history data
-  const scans: Scan[] = [
-    {
-      id: "1",
-      date: "2024-01-10",
-      crop: "Tomato",
-      result: "Early Blight",
-      status: "treated",
-      imageUrl: "/placeholder.svg",
-      confidence: 92,
-    },
-    {
-      id: "2",
-      date: "2024-01-08",
-      crop: "Rice",
-      result: "Healthy",
-      status: "healthy",
-      imageUrl: "/placeholder.svg",
-      confidence: 98,
-    },
-    {
-      id: "3",
-      date: "2024-01-05",
-      crop: "Wheat",
-      result: "Rust Disease",
-      status: "ongoing",
-      imageUrl: "/placeholder.svg",
-      confidence: 87,
-    },
-    {
-      id: "4",
-      date: "2024-01-03",
-      crop: "Tomato",
-      result: "Healthy",
-      status: "healthy",
-      imageUrl: "/placeholder.svg",
-      confidence: 95,
-    },
-    {
-      id: "5",
-      date: "2023-12-28",
-      crop: "Cotton",
-      result: "Leaf Curl",
-      status: "treated",
-      imageUrl: "/placeholder.svg",
-      confidence: 89,
-    },
-    {
-      id: "6",
-      date: "2023-12-20",
-      crop: "Rice",
-      result: "Brown Spot",
-      status: "ongoing",
-      imageUrl: "/placeholder.svg",
-      confidence: 84,
-    },
-  ];
+  // Fetch real data
+  const { data: analyses, isLoading, error } = useAnalyses();
+
+  const getStatus = (analysis: CropAnalysis): 'healthy' | 'treated' | 'ongoing' => {
+    if (!analysis.disease_prediction || 
+        analysis.disease_prediction.toLowerCase() === 'healthy' ||
+        analysis.disease_prediction.toLowerCase().includes('no disease')) {
+      return 'healthy';
+    }
+    if (analysis.status === 'completed') {
+      return 'treated';
+    }
+    return 'ongoing';
+  };
 
   const statusBadge = {
     healthy: { color: "bg-success text-success-foreground", icon: CheckCircle, label: "Healthy" },
@@ -114,57 +65,70 @@ export default function History() {
 
   // Get unique crops for filter
   const uniqueCrops = useMemo(() => {
-    return [...new Set(scans.map((s) => s.crop))];
-  }, [scans]);
+    if (!analyses) return [];
+    return [...new Set(analyses.map((s) => s.crop_type))];
+  }, [analyses]);
 
-  // Filter scans
-  const filteredScans = useMemo(() => {
-    return scans.filter((scan) => {
+  // Filter analyses
+  const filteredAnalyses = useMemo(() => {
+    if (!analyses) return [];
+    
+    return analyses.filter((analysis) => {
       // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
-        scan.crop.toLowerCase().includes(searchLower) ||
-        scan.result.toLowerCase().includes(searchLower);
+        analysis.crop_type.toLowerCase().includes(searchLower) ||
+        (analysis.disease_prediction?.toLowerCase().includes(searchLower) || false);
 
       // Crop filter
-      const matchesCrop = cropFilter === "all" || scan.crop === cropFilter;
+      const matchesCrop = cropFilter === "all" || analysis.crop_type === cropFilter;
 
       // Date filter
       let matchesDate = true;
       if (dateFilter !== "all") {
-        const scanDate = new Date(scan.date);
+        const analysisDate = new Date(analysis.analysis_date);
         const now = new Date();
-        const daysDiff = Math.floor((now.getTime() - scanDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysDiff = Math.floor((now.getTime() - analysisDate.getTime()) / (1000 * 60 * 60 * 24));
 
         if (dateFilter === "week") matchesDate = daysDiff <= 7;
         else if (dateFilter === "month") matchesDate = daysDiff <= 30;
         else if (dateFilter === "quarter") matchesDate = daysDiff <= 90;
       }
 
-      return matchesSearch && matchesCrop && matchesDate;
-    });
-  }, [scans, searchQuery, cropFilter, dateFilter]);
+      // Tab filter
+      const status = getStatus(analysis);
+      let matchesTab = true;
+      if (activeTab === "issues") matchesTab = status !== "healthy";
+      else if (activeTab === "healthy") matchesTab = status === "healthy";
 
-  // Filter by tab
-  const getTabScans = (tab: string) => {
-    if (tab === "all") return filteredScans;
-    if (tab === "issues") return filteredScans.filter((s) => s.status !== "healthy");
-    return filteredScans.filter((s) => s.status === "healthy");
-  };
+      return matchesSearch && matchesCrop && matchesDate && matchesTab;
+    });
+  }, [analyses, searchQuery, cropFilter, dateFilter, activeTab]);
+
+  // Stats
+  const stats = useMemo(() => {
+    if (!analyses) return { total: 0, healthy: 0, issues: 0 };
+    const healthy = analyses.filter(a => getStatus(a) === 'healthy').length;
+    return {
+      total: analyses.length,
+      healthy,
+      issues: analyses.length - healthy,
+    };
+  }, [analyses]);
 
   const handleExportAll = () => {
-    const data = filteredScans.map((scan) => ({
-      date: scan.date,
-      crop: scan.crop,
-      result: scan.result,
-      status: scan.status,
-      confidence: scan.confidence,
+    const data = filteredAnalyses.map((analysis) => ({
+      date: analysis.analysis_date,
+      crop: analysis.crop_type,
+      result: analysis.disease_prediction || 'Healthy',
+      status: getStatus(analysis),
+      confidence: analysis.confidence_score,
     }));
 
     const csv = [
       "Date,Crop,Result,Status,Confidence",
-      ...data.map((d) => `${d.date},${d.crop},${d.result},${d.status},${d.confidence}%`),
+      ...data.map((d) => `${d.date},${d.crop},${d.result},${d.status},${d.confidence || 0}%`),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -184,34 +148,33 @@ export default function History() {
 
   const hasActiveFilters = searchQuery || cropFilter !== "all" || dateFilter !== "all";
 
-  const renderScanCard = (scan: Scan) => {
-    const status = statusBadge[scan.status];
+  const renderScanCard = useCallback((analysis: CropAnalysis) => {
+    const status = statusBadge[getStatus(analysis)];
     const StatusIcon = status.icon;
 
     return (
       <Card
-        key={scan.id}
-        className="cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => navigate(`/analysis/${scan.id}`)}
+        className="cursor-pointer hover:shadow-md transition-shadow mb-3"
+        onClick={() => navigate(`/analysis/${analysis.id}`)}
       >
         <CardContent className="p-4">
           <div className="flex gap-4">
             <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0">
               <img
-                src={scan.imageUrl}
-                alt={scan.crop}
+                src={analysis.image_url || "/placeholder.svg"}
+                alt={analysis.crop_type}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium flex items-center gap-2">
+                  <p className="font-medium flex items-center gap-2 capitalize">
                     <Leaf className="h-4 w-4 text-primary" />
-                    {scan.crop}
+                    {analysis.crop_type}
                   </p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {scan.result}
+                    {analysis.disease_prediction || 'Healthy'}
                   </p>
                 </div>
                 <Badge className={status.color}>
@@ -222,33 +185,34 @@ export default function History() {
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {new Date(scan.date).toLocaleDateString()}
+                  {formatDistanceToNow(new Date(analysis.analysis_date), { addSuffix: true })}
                 </p>
-                <span className="text-xs font-medium text-primary">
-                  {scan.confidence}% confidence
-                </span>
+                {analysis.confidence_score && (
+                  <span className="text-xs font-medium text-primary">
+                    {Math.round(analysis.confidence_score)}% confidence
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
     );
-  };
+  }, [navigate]);
 
-  const renderGridItem = (scan: Scan) => {
-    const status = statusBadge[scan.status];
+  const renderGridItem = useCallback((analysis: CropAnalysis) => {
+    const status = statusBadge[getStatus(analysis)];
     const StatusIcon = status.icon;
 
     return (
       <Card
-        key={scan.id}
         className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
-        onClick={() => navigate(`/analysis/${scan.id}`)}
+        onClick={() => navigate(`/analysis/${analysis.id}`)}
       >
         <div className="aspect-square bg-muted relative">
           <img
-            src={scan.imageUrl}
-            alt={scan.crop}
+            src={analysis.image_url || "/placeholder.svg"}
+            alt={analysis.crop_type}
             className="w-full h-full object-cover"
           />
           <Badge className={`absolute top-2 right-2 text-xs ${status.color}`}>
@@ -256,40 +220,60 @@ export default function History() {
           </Badge>
         </div>
         <CardContent className="p-3">
-          <p className="font-medium text-sm truncate">{scan.crop}</p>
-          <p className="text-xs text-muted-foreground truncate">{scan.result}</p>
+          <p className="font-medium text-sm truncate capitalize">{analysis.crop_type}</p>
+          <p className="text-xs text-muted-foreground truncate">{analysis.disease_prediction || 'Healthy'}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {new Date(scan.date).toLocaleDateString()}
+            {formatDistanceToNow(new Date(analysis.analysis_date), { addSuffix: true })}
           </p>
         </CardContent>
       </Card>
     );
-  };
+  }, [navigate]);
+
+  if (error) {
+    return (
+      <AppLayout title="Crop History">
+        <div className="p-4 text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-destructive" />
+          <p className="text-destructive">Failed to load history</p>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Crop History">
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-24">
         {/* Stats Summary */}
         <div className="grid grid-cols-3 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-primary">{scans.length}</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-8 mx-auto mb-1" />
+              ) : (
+                <p className="text-2xl font-bold text-primary">{stats.total}</p>
+              )}
               <p className="text-xs text-muted-foreground">Total Scans</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-success">
-                {scans.filter((s) => s.status === "healthy").length}
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-8 mx-auto mb-1" />
+              ) : (
+                <p className="text-2xl font-bold text-success">{stats.healthy}</p>
+              )}
               <p className="text-xs text-muted-foreground">Healthy</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-accent">
-                {scans.filter((s) => s.status !== "healthy").length}
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-8 mx-auto mb-1" />
+              ) : (
+                <p className="text-2xl font-bold text-accent">{stats.issues}</p>
+              )}
               <p className="text-xs text-muted-foreground">Issues</p>
             </CardContent>
           </Card>
@@ -353,7 +337,7 @@ export default function History() {
                 <SelectContent>
                   <SelectItem value="all">All Crops</SelectItem>
                   {uniqueCrops.map((crop) => (
-                    <SelectItem key={crop} value={crop}>
+                    <SelectItem key={crop} value={crop} className="capitalize">
                       {crop}
                     </SelectItem>
                   ))}
@@ -389,52 +373,84 @@ export default function History() {
         </div>
 
         {/* Results count */}
-        {hasActiveFilters && (
+        {hasActiveFilters && analyses && (
           <p className="text-sm text-muted-foreground">
-            Showing {filteredScans.length} of {scans.length} scans
+            Showing {filteredAnalyses.length} of {analyses.length} scans
           </p>
         )}
 
         {/* History Tabs */}
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">All ({getTabScans("all").length})</TabsTrigger>
-            <TabsTrigger value="issues">Issues ({getTabScans("issues").length})</TabsTrigger>
-            <TabsTrigger value="healthy">Healthy ({getTabScans("healthy").length})</TabsTrigger>
+            <TabsTrigger value="all">
+              All ({analyses?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="issues">
+              Issues ({stats.issues})
+            </TabsTrigger>
+            <TabsTrigger value="healthy">
+              Healthy ({stats.healthy})
+            </TabsTrigger>
           </TabsList>
 
-          {["all", "issues", "healthy"].map((tab) => (
-            <TabsContent key={tab} value={tab} className="mt-4">
-              {getTabScans(tab).length === 0 ? (
-                <div className="text-center text-muted-foreground py-12">
-                  {tab === "issues" ? (
-                    <>
-                      <AlertTriangle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No active issues found</p>
-                    </>
-                  ) : tab === "healthy" ? (
-                    <>
-                      <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No healthy scans found</p>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No scans match your search</p>
-                    </>
-                  )}
-                </div>
-              ) : viewMode === "list" ? (
-                <div className="space-y-3">
-                  {getTabScans(tab).map(renderScanCard)}
-                </div>
+          <TabsContent value={activeTab} className="mt-4">
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        <Skeleton className="w-16 h-16 rounded-lg" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-24 mb-2" />
+                          <Skeleton className="h-3 w-32 mb-2" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredAnalyses.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                {activeTab === "issues" ? (
+                  <>
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No active issues found</p>
+                  </>
+                ) : activeTab === "healthy" ? (
+                  <>
+                    <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No healthy scans found</p>
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No scans match your search</p>
+                  </>
+                )}
+              </div>
+            ) : viewMode === "list" ? (
+              // Use virtual scrolling for large lists
+              filteredAnalyses.length > 20 ? (
+                <VirtualizedList
+                  items={filteredAnalyses}
+                  itemHeight={120}
+                  containerHeight={500}
+                  renderItem={(item) => renderScanCard(item)}
+                  className="pr-2"
+                />
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {getTabScans(tab).map(renderGridItem)}
+                <div className="space-y-3">
+                  {filteredAnalyses.map(renderScanCard)}
                 </div>
-              )}
-            </TabsContent>
-          ))}
+              )
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredAnalyses.map(renderGridItem)}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>

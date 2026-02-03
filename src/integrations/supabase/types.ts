@@ -92,6 +92,57 @@ export type Database = {
         }
         Relationships: []
       }
+      educational_content: {
+        Row: {
+          category: string
+          content_body: string | null
+          content_type: string
+          content_url: string | null
+          created_at: string
+          description: string
+          duration: string
+          id: string
+          is_downloadable: boolean
+          language: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category: string
+          content_body?: string | null
+          content_type: string
+          content_url?: string | null
+          created_at?: string
+          description: string
+          duration: string
+          id?: string
+          is_downloadable?: boolean
+          language?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category?: string
+          content_body?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string
+          description?: string
+          duration?: string
+          id?: string
+          is_downloadable?: boolean
+          language?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -174,6 +225,50 @@ export type Database = {
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "crop_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_content_progress: {
+        Row: {
+          content_id: string
+          created_at: string
+          id: string
+          is_bookmarked: boolean
+          is_downloaded: boolean
+          last_accessed_at: string | null
+          progress_percent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          id?: string
+          is_bookmarked?: boolean
+          is_downloaded?: boolean
+          last_accessed_at?: string | null
+          progress_percent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          id?: string
+          is_bookmarked?: boolean
+          is_downloaded?: boolean
+          last_accessed_at?: string | null
+          progress_percent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_progress_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "educational_content"
             referencedColumns: ["id"]
           },
         ]

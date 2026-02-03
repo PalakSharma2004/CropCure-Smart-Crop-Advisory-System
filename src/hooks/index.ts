@@ -55,6 +55,18 @@ export { useImageUpload } from './useImageUpload';
 // Offline sync
 export { useOfflineSync } from './useOfflineSync';
 
+// Dashboard stats
+export { useDashboardStats, type DashboardStats } from './useDashboardStats';
+
+// Educational content
+export {
+  useEducationalContent,
+  useToggleBookmark,
+  useMarkDownloaded,
+  type EducationalContent,
+  type ContentWithProgress,
+} from './useEducationalContent';
+
 // AI and external services
 export { useAIChat, type ChatMessage as AIChatMessage } from './useAIChat';
 export { useCropAnalysis } from './useCropAnalysis';
