@@ -23,6 +23,7 @@ const History = lazy(() => import("./pages/History"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Learn = lazy(() => import("./pages/Learn"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Page loading fallback
@@ -116,6 +117,12 @@ const App = () => (
                   <Learn />
                 </ProtectedRoute>
               } />
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
