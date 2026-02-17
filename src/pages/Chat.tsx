@@ -47,7 +47,7 @@ export default function Chat() {
     {
       id: "1",
       role: "assistant",
-      content: "Hello! I'm your CropCare AI assistant. How can I help you with your farming today? आपकी खेती में आज मैं कैसे मदद कर सकता हूं?",
+      content: "Hello! I'm your CropCure AI assistant. How can I help you with your farming today? आपकी खेती में आज मैं कैसे मदद कर सकता हूं?",
       timestamp: new Date(),
     },
   ]);

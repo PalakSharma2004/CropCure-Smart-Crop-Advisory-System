@@ -16,7 +16,7 @@ export function AppLayout({
   children, 
   showNav = true, 
   showHeader = true,
-  title = "CropCare",
+  title = "CropCure",
   rightElement
 }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);

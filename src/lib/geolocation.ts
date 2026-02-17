@@ -91,7 +91,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`,
       {
         headers: {
-          "User-Agent": "CropCare App",
+          "User-Agent": "CropCure App",
         },
       }
     );

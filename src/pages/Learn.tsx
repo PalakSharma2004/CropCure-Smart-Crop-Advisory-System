@@ -80,14 +80,14 @@ This comprehensive guide helps you identify and understand common crop diseases 
 4. Remove infected plant material promptly
 
 ### When to Seek Help
-If you notice widespread symptoms or rapid disease progression, consider consulting an agricultural expert or using the CropCare AI analysis feature.`,
+If you notice widespread symptoms or rapid disease progression, consider consulting an agricultural expert or using the CropCure AI analysis feature.`,
     treatments: `## ${item.title}
 
 ### Treatment Overview
 This guide provides step-by-step instructions for treating common crop issues effectively.
 
 ### Recommended Approach
-1. **Identify the problem** - Use CropCare's AI analysis for accurate diagnosis
+1. **Identify the problem** - Use CropCure's AI analysis for accurate diagnosis
 2. **Choose the right treatment** - Select appropriate fungicides/pesticides
 3. **Apply at the right time** - Early morning or late evening works best
 4. **Follow safety guidelines** - Always wear protective equipment
@@ -138,7 +138,7 @@ This educational resource covers essential farming practices to improve your cro
 Adjust your farming practices based on weather conditions and seasonal changes.
 
 ### Additional Resources
-Use the CropCare app features to track your progress and get personalized recommendations.`,
+Use the CropCure app features to track your progress and get personalized recommendations.`,
   };
   
   return sampleContents[item.category] || sampleContents.general;

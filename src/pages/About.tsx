@@ -59,7 +59,7 @@
              <Leaf className="h-10 w-10 text-primary" />
            </div>
            <h1 className="text-2xl font-heading font-bold text-primary mb-2">
-             CropCare
+              CropCure
            </h1>
            <p className="text-muted-foreground">
              Smart Farming Assistant
@@ -77,7 +77,7 @@
                Our Mission
              </h2>
              <p className="text-sm text-muted-foreground leading-relaxed">
-               CropCare is dedicated to empowering farmers with AI-powered crop disease detection 
+               CropCure is dedicated to empowering farmers with AI-powered crop disease detection 
                and expert treatment recommendations. We believe every farmer deserves access to 
                agricultural expertise, regardless of their location or resources.
              </p>
@@ -171,7 +171,7 @@
              Made with ❤️ in India
            </p>
            <p className="text-xs text-muted-foreground">
-             © 2024 CropCare. All rights reserved.
+             © 2024 CropCure. All rights reserved.
            </p>
          </div>
        </div>
