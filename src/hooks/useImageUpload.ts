@@ -64,10 +64,15 @@ export function useImageUpload() {
 
       setProgress(70);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (1 hour expiry)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from(bucket)
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
+
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        throw new Error('Failed to generate image URL');
+      }
+      const publicUrl = signedUrlData.signedUrl;
 
       let thumbnailUrl: string | undefined;
 
@@ -89,10 +94,10 @@ export function useImageUpload() {
             });
 
           if (!thumbError) {
-            const { data: { publicUrl: thumbUrl } } = supabase.storage
+            const { data: thumbSignedData } = await supabase.storage
               .from(bucket)
-              .getPublicUrl(thumbnailPath);
-            thumbnailUrl = thumbUrl;
+              .createSignedUrl(thumbnailPath, 3600);
+            thumbnailUrl = thumbSignedData?.signedUrl;
           }
         } catch (thumbError) {
           console.warn('Thumbnail generation failed:', thumbError);
