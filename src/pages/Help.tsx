@@ -23,15 +23,15 @@
      answer: "Go to the Camera tab, take a clear photo of the affected plant part (leaf, stem, or fruit), and our AI will analyze it within seconds. Make sure to capture the affected area clearly with good lighting."
    },
    {
-     question: "What crops does CropCare support?",
-     answer: "CropCare currently supports Rice, Wheat, Cotton, Tomato, Potato, Maize, Sugarcane, and many more. We're constantly adding support for new crops based on user feedback."
+      question: "What crops does CropCure support?",
+      answer: "CropCure currently supports Rice, Wheat, Cotton, Tomato, Potato, Maize, Sugarcane, and many more. We're constantly adding support for new crops based on user feedback."
    },
    {
      question: "How accurate is the disease detection?",
      answer: "Our AI model has been trained on millions of crop images and achieves 90%+ accuracy for common diseases. The confidence score shown with each analysis helps you understand the reliability of the prediction."
    },
    {
-     question: "Can I use CropCare offline?",
+     question: "Can I use CropCure offline?",
      answer: "Yes! You can capture images offline, and they will be automatically analyzed when you're back online. Your history and recommendations are also cached for offline viewing."
    },
    {
@@ -44,7 +44,7 @@
    },
    {
      question: "How can I change the app language?",
-     answer: "Go to Settings > Language and select your preferred language. CropCare supports English, Hindi, Marathi, Telugu, and Tamil."
+     answer: "Go to Settings > Language and select your preferred language. CropCure supports English, Hindi, Marathi, Telugu, and Tamil."
    },
    {
      question: "What should I do if the analysis seems incorrect?",
@@ -122,7 +122,7 @@
                  <Mail className="h-5 w-5 text-blue-600" />
                </div>
                <span className="text-sm font-medium">Email</span>
-               <span className="text-xs text-muted-foreground">support@cropcare.in</span>
+               <span className="text-xs text-muted-foreground">support@cropcure.in</span>
              </CardContent>
            </Card>
            

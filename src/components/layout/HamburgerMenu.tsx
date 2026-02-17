@@ -38,7 +38,7 @@ export function HamburgerMenu({ open, onOpenChange }: HamburgerMenuProps) {
               <Leaf className="h-5 w-5 text-primary" />
             </div>
             <SheetTitle className="font-heading text-xl text-primary">
-              CropCare
+              CropCure
             </SheetTitle>
           </div>
           <p className="text-sm text-muted-foreground">

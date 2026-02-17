@@ -135,7 +135,7 @@ export default function History() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "cropcare-history.csv";
+    a.download = "cropcure-history.csv";
     a.click();
     URL.revokeObjectURL(url);
   };

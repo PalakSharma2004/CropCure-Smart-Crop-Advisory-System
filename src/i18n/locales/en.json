@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CropCare",
+    "appName": "CropCure",
     "tagline": "Smart Farming Assistant",
     "loading": "Loading...",
     "skip": "Skip",
@@ -24,7 +24,7 @@
   },
   "onboarding": {
     "step1": {
-      "title": "Welcome to CropCare",
+      "title": "Welcome to CropCure",
       "description": "Your AI-powered farming assistant for healthier crops and better yields."
     },
     "step2": {

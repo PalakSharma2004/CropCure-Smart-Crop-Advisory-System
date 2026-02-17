@@ -61,7 +61,7 @@ export default function Splash() {
           <Leaf className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-heading font-bold text-white mb-2 animate-fade-in">
-          CropCare
+          CropCure
         </h1>
         <p className="text-white/80 text-sm animate-fade-in">
           Smart Farming Assistant
