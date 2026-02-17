@@ -27,16 +27,17 @@ global.ResizeObserver = class ResizeObserver {
 global.IntersectionObserver = class IntersectionObserver {
   root = null;
   rootMargin = "";
-  thresholds = [];
+  thresholds = [] as number[];
+  scrollMargin = "";
 
-  constructor() {}
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   observe() {}
   unobserve() {}
   disconnect() {}
-  takeRecords() {
+  takeRecords(): IntersectionObserverEntry[] {
     return [];
   }
-};
+} as unknown as typeof globalThis.IntersectionObserver;
 
 // Mock navigator.onLine
 Object.defineProperty(navigator, "onLine", {
