@@ -31,6 +31,7 @@ import {
   Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LOCATIONS } from "@/lib/geolocation";
 
 const weatherIcons = {
   sunny: Sun,
@@ -40,7 +41,7 @@ const weatherIcons = {
   foggy: CloudFog,
 };
 
-const locations = ["Varanasi, UP", "Lucknow, UP", "Kanpur, UP", "Patna, Bihar", "Jaipur, Rajasthan"];
+const locations = Object.keys(DEFAULT_LOCATIONS);
 
 export default function Weather() {
   const [selectedLocation, setSelectedLocation] = useState(locations[0]);
