@@ -12,16 +12,83 @@ export interface GeolocationError {
 
 // Default locations for common Indian cities
 export const DEFAULT_LOCATIONS: Record<string, LocationData> = {
-  "Varanasi, UP": { lat: 25.3176, lng: 82.9739, name: "Varanasi, UP" },
-  "Lucknow, UP": { lat: 26.8467, lng: 80.9462, name: "Lucknow, UP" },
-  "Kanpur, UP": { lat: 26.4499, lng: 80.3319, name: "Kanpur, UP" },
+  // Andhra Pradesh
+  "Vijayawada, AP": { lat: 16.5062, lng: 80.6480, name: "Vijayawada, AP" },
+  "Visakhapatnam, AP": { lat: 17.6868, lng: 83.2185, name: "Visakhapatnam, AP" },
+  // Arunachal Pradesh
+  "Itanagar, Arunachal Pradesh": { lat: 27.0844, lng: 93.6053, name: "Itanagar, Arunachal Pradesh" },
+  // Assam
+  "Guwahati, Assam": { lat: 26.1445, lng: 91.7362, name: "Guwahati, Assam" },
+  // Bihar
   "Patna, Bihar": { lat: 25.5941, lng: 85.1376, name: "Patna, Bihar" },
-  "Jaipur, Rajasthan": { lat: 26.9124, lng: 75.7873, name: "Jaipur, Rajasthan" },
-  "Delhi": { lat: 28.6139, lng: 77.209, name: "Delhi" },
-  "Mumbai, Maharashtra": { lat: 19.076, lng: 72.8777, name: "Mumbai, Maharashtra" },
+  "Gaya, Bihar": { lat: 24.7955, lng: 84.9994, name: "Gaya, Bihar" },
+  // Chhattisgarh
+  "Raipur, Chhattisgarh": { lat: 21.2514, lng: 81.6296, name: "Raipur, Chhattisgarh" },
+  // Delhi
+  "Delhi": { lat: 28.6139, lng: 77.2090, name: "Delhi" },
+  // Goa
+  "Panaji, Goa": { lat: 15.4909, lng: 73.8278, name: "Panaji, Goa" },
+  // Gujarat
+  "Ahmedabad, Gujarat": { lat: 23.0225, lng: 72.5714, name: "Ahmedabad, Gujarat" },
+  "Surat, Gujarat": { lat: 21.1702, lng: 72.8311, name: "Surat, Gujarat" },
+  // Haryana
+  "Chandigarh, Haryana": { lat: 30.7333, lng: 76.7794, name: "Chandigarh, Haryana" },
+  "Hisar, Haryana": { lat: 29.1492, lng: 75.7217, name: "Hisar, Haryana" },
+  // Himachal Pradesh
+  "Shimla, HP": { lat: 31.1048, lng: 77.1734, name: "Shimla, HP" },
+  // Jharkhand
+  "Ranchi, Jharkhand": { lat: 23.3441, lng: 85.3096, name: "Ranchi, Jharkhand" },
+  // Karnataka
   "Bengaluru, Karnataka": { lat: 12.9716, lng: 77.5946, name: "Bengaluru, Karnataka" },
+  "Mysuru, Karnataka": { lat: 12.2958, lng: 76.6394, name: "Mysuru, Karnataka" },
+  // Kerala
+  "Thiruvananthapuram, Kerala": { lat: 8.5241, lng: 76.9366, name: "Thiruvananthapuram, Kerala" },
+  "Kochi, Kerala": { lat: 9.9312, lng: 76.2673, name: "Kochi, Kerala" },
+  // Madhya Pradesh
+  "Bhopal, MP": { lat: 23.2599, lng: 77.4126, name: "Bhopal, MP" },
+  "Indore, MP": { lat: 22.7196, lng: 75.8577, name: "Indore, MP" },
+  // Maharashtra
+  "Mumbai, Maharashtra": { lat: 19.0760, lng: 72.8777, name: "Mumbai, Maharashtra" },
+  "Nagpur, Maharashtra": { lat: 21.1458, lng: 79.0882, name: "Nagpur, Maharashtra" },
+  "Pune, Maharashtra": { lat: 18.5204, lng: 73.8567, name: "Pune, Maharashtra" },
+  // Manipur
+  "Imphal, Manipur": { lat: 24.8170, lng: 93.9368, name: "Imphal, Manipur" },
+  // Meghalaya
+  "Shillong, Meghalaya": { lat: 25.5788, lng: 91.8933, name: "Shillong, Meghalaya" },
+  // Mizoram
+  "Aizawl, Mizoram": { lat: 23.7271, lng: 92.7176, name: "Aizawl, Mizoram" },
+  // Nagaland
+  "Kohima, Nagaland": { lat: 25.6751, lng: 94.1086, name: "Kohima, Nagaland" },
+  // Odisha
+  "Bhubaneswar, Odisha": { lat: 20.2961, lng: 85.8245, name: "Bhubaneswar, Odisha" },
+  // Punjab
+  "Ludhiana, Punjab": { lat: 30.9010, lng: 75.8573, name: "Ludhiana, Punjab" },
+  "Amritsar, Punjab": { lat: 31.6340, lng: 74.8723, name: "Amritsar, Punjab" },
+  // Rajasthan
+  "Jaipur, Rajasthan": { lat: 26.9124, lng: 75.7873, name: "Jaipur, Rajasthan" },
+  "Jodhpur, Rajasthan": { lat: 26.2389, lng: 73.0243, name: "Jodhpur, Rajasthan" },
+  // Sikkim
+  "Gangtok, Sikkim": { lat: 27.3389, lng: 88.6065, name: "Gangtok, Sikkim" },
+  // Tamil Nadu
   "Chennai, Tamil Nadu": { lat: 13.0827, lng: 80.2707, name: "Chennai, Tamil Nadu" },
-  "Hyderabad, Telangana": { lat: 17.385, lng: 78.4867, name: "Hyderabad, Telangana" },
+  "Coimbatore, Tamil Nadu": { lat: 11.0168, lng: 76.9558, name: "Coimbatore, Tamil Nadu" },
+  // Telangana
+  "Hyderabad, Telangana": { lat: 17.3850, lng: 78.4867, name: "Hyderabad, Telangana" },
+  // Tripura
+  "Agartala, Tripura": { lat: 23.8315, lng: 91.2868, name: "Agartala, Tripura" },
+  // Uttar Pradesh
+  "Lucknow, UP": { lat: 26.8467, lng: 80.9462, name: "Lucknow, UP" },
+  "Varanasi, UP": { lat: 25.3176, lng: 82.9739, name: "Varanasi, UP" },
+  "Kanpur, UP": { lat: 26.4499, lng: 80.3319, name: "Kanpur, UP" },
+  "Agra, UP": { lat: 27.1767, lng: 78.0081, name: "Agra, UP" },
+  // Uttarakhand
+  "Dehradun, Uttarakhand": { lat: 30.3165, lng: 78.0322, name: "Dehradun, Uttarakhand" },
+  // West Bengal
+  "Kolkata, West Bengal": { lat: 22.5726, lng: 88.3639, name: "Kolkata, West Bengal" },
+  // Jammu & Kashmir
+  "Srinagar, J&K": { lat: 34.0837, lng: 74.7973, name: "Srinagar, J&K" },
+  // Ladakh
+  "Leh, Ladakh": { lat: 34.1526, lng: 77.5771, name: "Leh, Ladakh" },
 };
 
 // Check if geolocation is supported
