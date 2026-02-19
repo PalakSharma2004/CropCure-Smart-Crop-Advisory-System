@@ -117,6 +117,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Save parsed values for error handler
+  let parsedLat = 25;
+  let parsedLon = 77;
+
   try {
     const body = await req.json();
     
@@ -132,37 +136,39 @@ serve(async (req) => {
     }
     
     const { lat, lon, locationName } = validationResult.data;
+    parsedLat = lat;
+    parsedLon = lon;
     
     const OPENWEATHER_API_KEY = Deno.env.get("OPENWEATHER_API_KEY");
     
     // If no API key, return mock data
     if (!OPENWEATHER_API_KEY) {
       console.log("Using mock weather data - no API key configured");
-      const mockData: WeatherData = generateMockWeatherData(locationName || "Your Location");
+      const mockData: WeatherData = generateMockWeatherData(locationName || "Your Location", lat, lon);
       return new Response(JSON.stringify(mockData), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch current weather
-    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`;
-    const currentRes = await fetch(currentUrl);
+    // Fetch current weather and forecast in parallel
+    const [currentRes, forecastRes] = await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`),
+    ]);
     
     if (!currentRes.ok) {
-      throw new Error(`Weather API error: ${currentRes.status}`);
+      const errBody = await currentRes.text();
+      throw new Error(`Weather API error: ${currentRes.status} - ${errBody}`);
     }
-    
-    const currentData = await currentRes.json();
-    
-    // Fetch 7-day forecast
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`;
-    const forecastRes = await fetch(forecastUrl);
-    
     if (!forecastRes.ok) {
-      throw new Error(`Forecast API error: ${forecastRes.status}`);
+      const errBody = await forecastRes.text();
+      throw new Error(`Forecast API error: ${forecastRes.status} - ${errBody}`);
     }
     
-    const forecastData = await forecastRes.json();
+    const [currentData, forecastData] = await Promise.all([
+      currentRes.json(),
+      forecastRes.json(),
+    ]);
     
     // Process current weather
     const sunriseDate = new Date(currentData.sys.sunrise * 1000);
@@ -172,8 +178,8 @@ serve(async (req) => {
       temperature: Math.round(currentData.main.temp),
       feelsLike: Math.round(currentData.main.feels_like),
       humidity: currentData.main.humidity,
-      windSpeed: Math.round(currentData.wind.speed * 3.6), // Convert m/s to km/h
-      uvIndex: 6, // OpenWeatherMap free tier doesn't include UV
+      windSpeed: Math.round(currentData.wind.speed * 3.6),
+      uvIndex: 6,
       visibility: Math.round((currentData.visibility || 10000) / 1000),
       pressure: currentData.main.pressure,
       condition: mapCondition(currentData.weather[0].id),
@@ -200,17 +206,16 @@ serve(async (req) => {
     dailyForecasts.forEach((items, dateStr) => {
       if (dayIndex >= 7) return;
       
-      const temps = items.map((i) => i.main.temp);
+      const temps = items.map((i: any) => i.main.temp);
       const high = Math.round(Math.max(...temps));
       const low = Math.round(Math.min(...temps));
-      const avgPrecip = items.reduce((sum, i) => sum + (i.pop || 0), 0) / items.length * 100;
-      const avgHumidity = items.reduce((sum, i) => sum + i.main.humidity, 0) / items.length;
-      const avgWind = items.reduce((sum, i) => sum + i.wind.speed, 0) / items.length * 3.6;
+      const avgPrecip = items.reduce((sum: number, i: any) => sum + (i.pop || 0), 0) / items.length * 100;
+      const avgHumidity = items.reduce((sum: number, i: any) => sum + i.main.humidity, 0) / items.length;
+      const avgWind = items.reduce((sum: number, i: any) => sum + i.wind.speed, 0) / items.length * 3.6;
       
-      // Get the most common condition
-      const conditions = items.map((i) => mapCondition(i.weather[0].id));
+      const conditions = items.map((i: any) => mapCondition(i.weather[0].id));
       const conditionCounts: Record<string, number> = {};
-      conditions.forEach((c) => {
+      conditions.forEach((c: string) => {
         conditionCounts[c] = (conditionCounts[c] || 0) + 1;
       });
       const mainCondition = Object.entries(conditionCounts).sort((a, b) => b[1] - a[1])[0][0];
@@ -269,61 +274,83 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Weather function error:", error);
-    // Return mock data on error
-    const mockData = generateMockWeatherData("Your Location");
+    // Return location-aware mock data on error
+    const mockData = generateMockWeatherData("Your Location", parsedLat, parsedLon);
     return new Response(JSON.stringify(mockData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
 
-function generateMockWeatherData(location: string): WeatherData {
+function generateMockWeatherData(location: string, lat?: number, lon?: number): WeatherData {
   const today = new Date();
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   
+  // Use coordinates to generate deterministic but varied data per location
+  const seed = Math.abs((lat || 0) * 1000 + (lon || 0) * 100);
+  const seededRandom = (offset: number) => {
+    const x = Math.sin(seed + offset) * 10000;
+    return x - Math.floor(x);
+  };
+
+  // Base temperature varies by latitude (closer to equator = hotter)
+  const latAbs = Math.abs(lat || 25);
+  const baseTemp = latAbs < 15 ? 32 : latAbs < 25 ? 28 : latAbs < 30 ? 22 : 15;
+  const baseHumidity = (lon || 77) > 80 ? 75 : 55; // Eastern India more humid
+  
+  const conditions = ["sunny", "partly-cloudy", "cloudy", "rainy"];
+  const conditionIndex = Math.floor(seededRandom(0) * conditions.length);
+  const currentCondition = conditions[conditionIndex];
+  const descriptions: Record<string, string> = {
+    "sunny": "Clear sky",
+    "partly-cloudy": "Partly cloudy",
+    "cloudy": "Overcast clouds",
+    "rainy": "Light rain",
+  };
+  
+  const currentTemp = baseTemp + Math.floor(seededRandom(1) * 6) - 2;
+  const currentHumidity = baseHumidity + Math.floor(seededRandom(2) * 20) - 10;
+  const currentWind = 5 + Math.floor(seededRandom(3) * 20);
+  
+  // Sunrise/sunset vary by latitude
+  const sunriseHour = latAbs > 28 ? 7 : 6;
+  const sunsetHour = latAbs > 28 ? 6 : 7;
+  
   return {
     current: {
-      temperature: 28,
-      feelsLike: 31,
-      humidity: 65,
-      windSpeed: 12,
-      uvIndex: 7,
-      visibility: 10,
-      pressure: 1013,
-      condition: "partly-cloudy",
-      description: "Partly cloudy",
-      sunrise: "6:15 AM",
-      sunset: "6:45 PM",
-      icon: "02d",
+      temperature: currentTemp,
+      feelsLike: currentTemp + Math.floor(seededRandom(4) * 4),
+      humidity: Math.min(95, Math.max(20, currentHumidity)),
+      windSpeed: currentWind,
+      uvIndex: currentCondition === "sunny" ? 8 : currentCondition === "rainy" ? 3 : 5,
+      visibility: currentCondition === "rainy" ? 5 : 10,
+      pressure: 1008 + Math.floor(seededRandom(5) * 15),
+      condition: currentCondition,
+      description: descriptions[currentCondition] || "Partly cloudy",
+      sunrise: `${sunriseHour}:${String(10 + Math.floor(seededRandom(6) * 30)).padStart(2, "0")} AM`,
+      sunset: `${sunsetHour}:${String(10 + Math.floor(seededRandom(7) * 35)).padStart(2, "0")} PM`,
+      icon: currentCondition === "sunny" ? "01d" : currentCondition === "rainy" ? "10d" : "02d",
     },
     forecast: Array.from({ length: 7 }, (_, i) => {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
-      const conditions = ["sunny", "partly-cloudy", "cloudy", "rainy"];
+      const cIdx = Math.floor(seededRandom(10 + i * 3) * conditions.length);
+      const dayCondition = conditions[cIdx];
+      const dayHigh = baseTemp + Math.floor(seededRandom(11 + i * 3) * 7) - 1;
+      const dayLow = dayHigh - 8 - Math.floor(seededRandom(12 + i * 3) * 5);
       return {
         date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
         day: i === 0 ? "Today" : days[date.getDay()],
-        high: 28 + Math.floor(Math.random() * 5),
-        low: 18 + Math.floor(Math.random() * 3),
-        condition: conditions[Math.floor(Math.random() * conditions.length)],
-        precipitation: Math.floor(Math.random() * 80),
-        humidity: 50 + Math.floor(Math.random() * 30),
-        windSpeed: 8 + Math.floor(Math.random() * 15),
-        icon: "02d",
+        high: dayHigh,
+        low: dayLow,
+        condition: dayCondition,
+        precipitation: dayCondition === "rainy" ? 60 + Math.floor(seededRandom(13 + i) * 30) : Math.floor(seededRandom(14 + i) * 40),
+        humidity: baseHumidity + Math.floor(seededRandom(15 + i) * 25) - 10,
+        windSpeed: 5 + Math.floor(seededRandom(16 + i) * 18),
+        icon: dayCondition === "sunny" ? "01d" : dayCondition === "rainy" ? "10d" : "02d",
       };
     }),
-    alerts: [
-      {
-        type: "weather",
-        title: "Weather Advisory",
-        description: "Variable weather conditions expected this week.",
-        severity: "info",
-        validUntil: "Next week",
-      },
-    ],
-    farmingTips: [
-      { type: "info", title: "Monitor Conditions", description: "Keep an eye on weather updates for optimal farming decisions." },
-      { type: "action", title: "Check Soil Moisture", description: "Ensure proper soil moisture levels before irrigation." },
-    ],
+    alerts: [],
+    farmingTips: generateFarmingTips([]),
   };
 }
