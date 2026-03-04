@@ -2,134 +2,111 @@ import { AppLayout } from "@/components/layout";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { 
-  Droplets, 
-  Bug, 
-  Leaf, 
-  ShoppingBag, 
-  Clock, 
-  CheckCircle,
-  AlertCircle
-} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Droplets, Leaf, Bug, ShoppingBag, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { useAnalysis } from "@/hooks/useAnalyses";
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item)).filter((item) => item.trim().length > 0);
+}
 
 export default function Recommendations() {
   const { analysisId } = useParams();
   const navigate = useNavigate();
+  const { data, isLoading, error } = useAnalysis(analysisId);
 
-  // Mock data
-  const recommendations = {
-    disease: "Early Blight",
-    treatments: [
-      {
-        id: "1",
-        type: "chemical",
-        name: "Copper-based Fungicide",
-        description: "Apply copper oxychloride spray at 2.5g per liter of water",
-        timing: "Early morning or late evening",
-        frequency: "Every 7-10 days",
-        priority: "high",
-      },
-      {
-        id: "2",
-        type: "organic",
-        name: "Neem Oil Treatment",
-        description: "Mix 5ml neem oil with 1 liter water and spray on affected areas",
-        timing: "Evening hours",
-        frequency: "Weekly",
-        priority: "medium",
-      },
-      {
-        id: "3",
-        type: "cultural",
-        name: "Remove Affected Leaves",
-        description: "Prune and dispose of infected leaves to prevent spread",
-        timing: "Immediately",
-        frequency: "As needed",
-        priority: "high",
-      },
-    ],
-    preventiveMeasures: [
-      "Ensure proper spacing between plants for air circulation",
-      "Water at the base of plants, avoid wetting leaves",
-      "Rotate crops annually",
-      "Use disease-resistant varieties",
-    ],
-  };
+  const analysis = data?.analysis;
+  const recommendations = data?.recommendations;
 
-  const priorityBadge = {
-    high: "bg-destructive text-destructive-foreground",
-    medium: "bg-accent text-accent-foreground",
-    low: "bg-secondary text-secondary-foreground",
-  };
+  if (isLoading) {
+    return (
+      <AppLayout title="Recommendations">
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </AppLayout>
+    );
+  }
 
-  const typeIcon = {
-    chemical: Droplets,
-    organic: Leaf,
-    cultural: Bug,
-  };
+  if (error || !analysis) {
+    return (
+      <AppLayout title="Recommendations">
+        <div className="p-4 text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-destructive" />
+          <p className="font-medium">Recommendations not available</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {error instanceof Error ? error.message : "Could not load this recommendation set."}
+          </p>
+          <Button onClick={() => navigate("/history")}>Go to History</Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const treatmentSteps = toStringArray(recommendations?.treatment_steps);
+  const preventiveMeasures = toStringArray(recommendations?.precautionary_measures);
+  const productsRecommended = toStringArray(recommendations?.products_recommended);
+  const expertTips = toStringArray(recommendations?.expert_tips);
+
+  const diseaseName = analysis.disease_prediction || "Healthy";
+
+  const treatmentIcons = [Droplets, Leaf, Bug];
 
   return (
     <AppLayout title="Recommendations">
       <div className="p-4 space-y-6">
-        {/* Header */}
         <div>
-          <h2 className="text-xl font-heading font-semibold">
-            Treatment Plan
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            For {recommendations.disease}
+          <h2 className="text-xl font-heading font-semibold">Treatment Plan</h2>
+          <p className="text-muted-foreground text-sm capitalize">
+            For {analysis.crop_type} • {diseaseName}
           </p>
         </div>
 
-        {/* Treatments */}
         <Accordion type="single" collapsible className="space-y-3">
-          {recommendations.treatments.map((treatment) => {
-            const Icon = typeIcon[treatment.type as keyof typeof typeIcon];
-            return (
-              <AccordionItem 
-                key={treatment.id} 
-                value={treatment.id}
-                className="border rounded-lg px-4"
-              >
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-primary" />
+          {treatmentSteps.length > 0 ? (
+            treatmentSteps.map((step, index) => {
+              const Icon = treatmentIcons[index % treatmentIcons.length];
+              return (
+                <AccordionItem key={index} value={`step-${index}`} className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3 text-left">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Treatment Step {index + 1}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Action recommended by AI analysis</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{treatment.name}</p>
-                      <Badge 
-                        variant="secondary" 
-                        className={`mt-1 text-xs ${priorityBadge[treatment.priority as keyof typeof priorityBadge]}`}
-                      >
-                        {treatment.priority} priority
-                      </Badge>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-4">
+                    <div className="space-y-3 ml-13">
+                      <p className="text-sm text-muted-foreground">{step}</p>
+                      {recommendations?.timeline && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>{recommendations.timeline}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="space-y-3 ml-13">
-                    <p className="text-sm text-muted-foreground">
-                      {treatment.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{treatment.timing}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>{treatment.frequency}</span>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })
+          ) : (
+            <Card>
+              <CardContent className="p-4 text-sm text-muted-foreground">
+                No treatment steps available for this analysis.
+              </CardContent>
+            </Card>
+          )}
         </Accordion>
 
-        {/* Preventive Measures */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
@@ -138,18 +115,52 @@ export default function Recommendations() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {recommendations.preventiveMeasures.map((measure, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-muted-foreground">{measure}</span>
-                </li>
-              ))}
-            </ul>
+            {preventiveMeasures.length > 0 ? (
+              <ul className="space-y-2">
+                {preventiveMeasures.map((measure, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">{measure}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No preventive measures available.</p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Actions */}
+        {(productsRecommended.length > 0 || expertTips.length > 0) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-heading">Additional Guidance</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {productsRecommended.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Recommended Products</p>
+                  <ul className="space-y-1">
+                    {productsRecommended.map((product, index) => (
+                      <li key={index} className="text-sm text-muted-foreground">• {product}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {expertTips.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Expert Tips</p>
+                  <ul className="space-y-1">
+                    {expertTips.map((tip, index) => (
+                      <li key={index} className="text-sm text-muted-foreground">• {tip}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="space-y-3">
           <Button size="lg" className="w-full">
             <ShoppingBag className="mr-2 h-4 w-4" />
@@ -163,3 +174,4 @@ export default function Recommendations() {
     </AppLayout>
   );
 }
+
